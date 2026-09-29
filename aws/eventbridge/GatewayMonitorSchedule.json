@@ -1,0 +1,9 @@
+{
+    "Name": "GatewayMonitorSchedule",
+    "Arn": "arn:aws:events:us-east-1:894343958464:rule/GatewayMonitorSchedule",
+    "ScheduleExpression": "rate(1 minute)",
+    "State": "ENABLED",
+    "Description": "",
+    "EventBusName": "default",
+    "CreatedBy": "894343958464"
+}

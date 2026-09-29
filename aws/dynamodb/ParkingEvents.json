@@ -1,0 +1,49 @@
+{
+    "Table": {
+        "AttributeDefinitions": [
+            {
+                "AttributeName": "eventID",
+                "AttributeType": "S"
+            },
+            {
+                "AttributeName": "parkingID",
+                "AttributeType": "S"
+            }
+        ],
+        "TableName": "ParkingEvents",
+        "KeySchema": [
+            {
+                "AttributeName": "parkingID",
+                "KeyType": "HASH"
+            },
+            {
+                "AttributeName": "eventID",
+                "KeyType": "RANGE"
+            }
+        ],
+        "TableStatus": "ACTIVE",
+        "CreationDateTime": "2026-09-26T06:34:21.705000+00:00",
+        "ProvisionedThroughput": {
+            "NumberOfDecreasesToday": 0,
+            "ReadCapacityUnits": 0,
+            "WriteCapacityUnits": 0
+        },
+        "TableSizeBytes": 0,
+        "ItemCount": 0,
+        "TableArn": "arn:aws:dynamodb:us-east-1:894343958464:table/ParkingEvents",
+        "TableId": "10df51d2-92cc-4e0c-9017-1c66af2d610c",
+        "BillingModeSummary": {
+            "BillingMode": "PAY_PER_REQUEST",
+            "LastUpdateToPayPerRequestDateTime": "2026-09-26T06:34:21.705000+00:00"
+        },
+        "TableClassSummary": {
+            "TableClass": "STANDARD"
+        },
+        "DeletionProtectionEnabled": false,
+        "WarmThroughput": {
+            "ReadUnitsPerSecond": 12000,
+            "WriteUnitsPerSecond": 4000,
+            "Status": "ACTIVE"
+        }
+    }
+}

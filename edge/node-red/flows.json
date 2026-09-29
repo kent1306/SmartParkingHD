@@ -1,0 +1,346 @@
+[
+    {
+        "id": "ac59c6010bb5f57e",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "15e8348a0ba03daa",
+        "type": "tls-config",
+        "name": "HiveMQ Cloud TLS",
+        "certType": "files",
+        "cert": "",
+        "key": "",
+        "p12": "",
+        "p12name": "",
+        "ca": "",
+        "certname": "",
+        "keyname": "",
+        "caname": "",
+        "servername": "",
+        "verifyservercert": true,
+        "alpnprotocol": "",
+        "certEnv": "",
+        "keyEnv": "",
+        "caEnv": ""
+    },
+    {
+        "id": "e965e78d99d144c5",
+        "type": "mqtt-broker",
+        "name": "Kent HiveMQ Cloud",
+        "broker": "9b5b31670c27463e908e450fd73977a4.s1.eu.hivemq.cloud",
+        "port": "8883",
+        "tls": "15e8348a0ba03daa",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": true,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "2929e148b687264e",
+        "type": "mqtt in",
+        "z": "ac59c6010bb5f57e",
+        "name": "",
+        "topic": "smartparking/PARK-A/slots/+",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "e965e78d99d144c5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 400,
+        "wires": [
+            [
+                "8013f9466e9dcea5"
+            ]
+        ]
+    },
+    {
+        "id": "8013f9466e9dcea5",
+        "type": "json",
+        "z": "ac59c6010bb5f57e",
+        "name": "",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 350,
+        "y": 300,
+        "wires": [
+            [
+                "8d11017eb1b58705"
+            ]
+        ]
+    },
+    {
+        "id": "d376ab2bba7a81db",
+        "type": "debug",
+        "z": "ac59c6010bb5f57e",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1020,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "8d11017eb1b58705",
+        "type": "function",
+        "z": "ac59c6010bb5f57e",
+        "name": "validate parking event",
+        "func": "const data = msg.payload;\n\n// Check required fields\nif (!data.parkingID ||\n    !data.slotID ||\n    !data.deviceID ||\n    !data.status ||\n    !data.timestamp ||\n    !data.sensorStatus)\n{\n    node.warn(\"Rejected: Missing required field\");\n    return null;\n}\n\n// Check parking status\nif (data.status !== \"occupied\" &&\n    data.status !== \"available\")\n{\n    node.warn(\"Rejected: Invalid parking status\");\n    return null;\n}\n\n// If occupied, a plate number should exist\nif (data.status === \"occupied\" && !data.plateNumber)\n{\n    node.warn(\"Rejected: Occupied space has no plate number\");\n    return null;\n}\n\n// --------------------------------\n// Duplicate and outdated detection\n// --------------------------------\n\nconst currentTimestamp =\n    Date.parse(msg.payload.timestamp);\n\nif (isNaN(currentTimestamp))\n{\n    node.warn(\"Rejected: Invalid timestamp\");\n    return null;\n}\n\n\n// Each parking slot remembers its latest accepted event\nconst eventKey =\n    `lastEvent_${msg.payload.parkingID}_${msg.payload.slotID}`;\n\nconst lastEvent =\n    flow.get(eventKey);\n\n\n// Create a simple signature for duplicate detection\nconst eventSignature =\n    JSON.stringify({\n        timestamp: msg.payload.timestamp,\n        status: msg.payload.status,\n        plateNumber: msg.payload.plateNumber || null,\n        sensorStatus: msg.payload.sensorStatus\n    });\n\n\nif (lastEvent)\n{\n    // Same event received again\n    if (eventSignature === lastEvent.signature)\n    {\n        node.warn(\n            `Rejected: Duplicate event for ${msg.payload.slotID}`\n        );\n\n        return null;\n    }\n\n\n    // Event timestamp is older than the latest accepted event\n    if (currentTimestamp <= lastEvent.timestamp)\n    {\n        node.warn(\n            `Rejected: Outdated event for ${msg.payload.slotID}`\n        );\n\n        return null;\n    }\n}\n\n\n// Remember the latest valid event\nflow.set(\n    eventKey,\n    {\n        timestamp: currentTimestamp,\n        signature: eventSignature\n    }\n);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 360,
+        "wires": [
+            [
+                "f5b966f556029f87",
+                "bc11075c704d780a"
+            ]
+        ]
+    },
+    {
+        "id": "bc11075c704d780a",
+        "type": "function",
+        "z": "ac59c6010bb5f57e",
+        "name": "parking status",
+        "func": "const data = msg.payload;\n\n// Get current slot states from flow memory\nlet parkingSpaces = flow.get(\"parkingSpaces\") || {};\n\n// Update the latest state of this slot\nparkingSpaces[data.slotID] = data.status;\n\n// Save updated states\nflow.set(\"parkingSpaces\", parkingSpaces);\n\n// Calculate totals\nconst totalSpaces = Object.keys(parkingSpaces).length;\n\nlet occupiedSpaces = 0;\n\nfor (const slotID in parkingSpaces)\n{\n    if (parkingSpaces[slotID] === \"occupied\")\n    {\n        occupiedSpaces++;\n    }\n}\n\nconst availableSpaces = totalSpaces - occupiedSpaces;\n\n// Create new output\nmsg.payload =\n{\n    parkingID: data.parkingID,\n    totalSpaces: totalSpaces,\n    occupiedSpaces: occupiedSpaces,\n    availableSpaces: availableSpaces\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 780,
+        "y": 480,
+        "wires": [
+            [
+                "cbd5c35fc10d84be",
+                "d376ab2bba7a81db"
+            ]
+        ]
+    },
+    {
+        "id": "cbd5c35fc10d84be",
+        "type": "mqtt out",
+        "z": "ac59c6010bb5f57e",
+        "name": "",
+        "topic": "smartparking/PARK-A/display",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "e965e78d99d144c5",
+        "x": 1040,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "fdcdf2bdb4dde0fd",
+        "type": "http request",
+        "z": "ac59c6010bb5f57e",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://a7fls5fve5.execute-api.us-east-1.amazonaws.com/dev/parking-event",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1010,
+        "y": 220,
+        "wires": [
+            [
+                "e2b57bcbc987e982"
+            ]
+        ]
+    },
+    {
+        "id": "f5b966f556029f87",
+        "type": "function",
+        "z": "ac59c6010bb5f57e",
+        "name": "prepare cloud event",
+        "func": "const data = msg.payload;\n\n// Prepare HTTP request data\nmsg.headers = {\n    \"Content-Type\": \"application/json\"\n};\n\nmsg.payload = JSON.stringify(data);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 240,
+        "wires": [
+            [
+                "737419c78e805a2b"
+            ]
+        ]
+    },
+    {
+        "id": "e2b57bcbc987e982",
+        "type": "debug",
+        "z": "ac59c6010bb5f57e",
+        "name": "Cloud Respond Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1260,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "737419c78e805a2b",
+        "type": "function",
+        "z": "ac59c6010bb5f57e",
+        "name": "Add API Key",
+        "func": "msg.headers = msg.headers || {};\n\nmsg.headers[\"Content-Type\"] = \"application/json\";\n\nmsg.headers[\"x-api-key\"] =\n    env.get(\"SMART_PARKING_API_KEY\");\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 120,
+        "wires": [
+            [
+                "fdcdf2bdb4dde0fd"
+            ]
+        ]
+    },
+    {
+        "id": "03434b20b3dfc3f2",
+        "type": "inject",
+        "z": "ac59c6010bb5f57e",
+        "name": "Heartbeat",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "10",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 620,
+        "wires": [
+            [
+                "b2623f60d03b345c"
+            ]
+        ]
+    },
+    {
+        "id": "b2623f60d03b345c",
+        "type": "function",
+        "z": "ac59c6010bb5f57e",
+        "name": "Prepare Gateway Heartbeat",
+        "func": "msg.payload =\n{\n    gatewayID: \"GATEWAY-PARK-A\",\n    parkingID: \"PARK-A\",\n    timestamp: new Date().toISOString()\n};\n\n\nmsg.headers = msg.headers || {};\n\nmsg.headers[\"Content-Type\"] =\n    \"application/json\";\n\nmsg.headers[\"x-api-key\"] =\n    env.get(\"SMART_PARKING_API_KEY\");\n\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 640,
+        "wires": [
+            [
+                "4fd6c1639b2f5adc"
+            ]
+        ]
+    },
+    {
+        "id": "4fd6c1639b2f5adc",
+        "type": "http request",
+        "z": "ac59c6010bb5f57e",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://a7fls5fve5.execute-api.us-east-1.amazonaws.com/dev/gateway-heartbeat",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 730,
+        "y": 660,
+        "wires": [
+            [
+                "b0ce77bcf10c31ad"
+            ]
+        ]
+    },
+    {
+        "id": "b0ce77bcf10c31ad",
+        "type": "debug",
+        "z": "ac59c6010bb5f57e",
+        "name": "debug 2",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 940,
+        "y": 660,
+        "wires": []
+    }
+]

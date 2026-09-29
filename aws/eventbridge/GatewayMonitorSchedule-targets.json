@@ -1,0 +1,8 @@
+{
+    "Targets": [
+        {
+            "Id": "ij0xtuvvoldrc8mbs44g",
+            "Arn": "arn:aws:lambda:us-east-1:894343958464:function:GatewayMonitor"
+        }
+    ]
+}

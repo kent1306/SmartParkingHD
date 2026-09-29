@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+node_modules/
+*.backup
+*.tar.gz
+*.zip
+*.log
+
+# Old diagram does not match the current gateway service and DynamoDB design.
+architecture.png

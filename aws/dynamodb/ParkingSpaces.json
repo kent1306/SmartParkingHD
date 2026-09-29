@@ -1,0 +1,49 @@
+{
+    "Table": {
+        "AttributeDefinitions": [
+            {
+                "AttributeName": "parkingID",
+                "AttributeType": "S"
+            },
+            {
+                "AttributeName": "slotID",
+                "AttributeType": "S"
+            }
+        ],
+        "TableName": "ParkingSpaces",
+        "KeySchema": [
+            {
+                "AttributeName": "parkingID",
+                "KeyType": "HASH"
+            },
+            {
+                "AttributeName": "slotID",
+                "KeyType": "RANGE"
+            }
+        ],
+        "TableStatus": "ACTIVE",
+        "CreationDateTime": "2026-09-26T06:34:00.973000+00:00",
+        "ProvisionedThroughput": {
+            "NumberOfDecreasesToday": 0,
+            "ReadCapacityUnits": 0,
+            "WriteCapacityUnits": 0
+        },
+        "TableSizeBytes": 0,
+        "ItemCount": 0,
+        "TableArn": "arn:aws:dynamodb:us-east-1:894343958464:table/ParkingSpaces",
+        "TableId": "9a2d765d-c67c-4b77-9ede-adbcf1340f55",
+        "BillingModeSummary": {
+            "BillingMode": "PAY_PER_REQUEST",
+            "LastUpdateToPayPerRequestDateTime": "2026-09-26T06:34:00.973000+00:00"
+        },
+        "TableClassSummary": {
+            "TableClass": "STANDARD"
+        },
+        "DeletionProtectionEnabled": false,
+        "WarmThroughput": {
+            "ReadUnitsPerSecond": 12000,
+            "WriteUnitsPerSecond": 4000,
+            "Status": "ACTIVE"
+        }
+    }
+}

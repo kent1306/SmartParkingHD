@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Parking Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>Smart Parking Dashboard</h1>
+        <p>PARK-A Monitoring System</p>
+    </header>
+
+
+    <main>
+
+        <!-- Summary -->
+        <section class="summary">
+
+            <div class="card">
+                <h3>Total Spaces</h3>
+                <p id="totalSpaces">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Available</h3>
+                <p id="availableSpaces">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Occupied</h3>
+                <p id="occupiedSpaces">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Active Alerts</h3>
+                <p id="activeAlerts">0</p>
+            </div>
+
+        </section>
+
+
+        <!-- Parking Spaces -->
+        <section class="panel">
+
+            <h2>Parking Spaces</h2>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Slot</th>
+                        <th>Status</th>
+                        <th>Plate Number</th>
+                        <th>Payment</th>
+                        <th>Permit</th>
+                    </tr>
+                </thead>
+
+                <tbody id="parkingTable">
+                </tbody>
+
+            </table>
+
+        </section>
+
+
+        <!-- Alerts -->
+        <section class="panel">
+
+            <h2>Active Alerts</h2>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Alert Type</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+
+                <tbody id="alertTable">
+                </tbody>
+
+            </table>
+
+        </section>
+
+    </main>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
